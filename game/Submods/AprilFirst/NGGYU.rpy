@@ -254,3 +254,4 @@ label rickroll_monika_interpretation:
             m 5ekbfb "I love you, [player]."
         $ mas_ILY()
     return
+    
