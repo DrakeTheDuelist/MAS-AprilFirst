@@ -1,9 +1,6 @@
 define rickroll_a1 = datetime.date(datetime.date.today().year, 4, 1)
 
 init 5 python:
-    removeTopicID("rickroll_song_prank")
-    mas_eraseTopic("rickroll_song_prank")
-
     addEvent(
         Event(
             persistent._mas_songs_database,
