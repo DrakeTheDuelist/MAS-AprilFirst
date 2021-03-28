@@ -1,15 +1,17 @@
 default persistent._rickroll_pranked = False
 
+init 4 python:    
+    persistent._rickroll_pranked = False
+
 init 5 python:
-    persistent.rickroll_pranked = False
     # delete events (tests a first run)
-    if (False):
-        removeTopicID("rickroll_song_prank")
-        mas_eraseTopic("rickroll_song_prank")
-        removeTopicID("rickroll_song_nggyu")
-        mas_eraseTopic("rickroll_song_nggyu")
-        removeTopicID("rickroll_song_analysis")
-        mas_eraseTopic("rickroll_song_analysis")
+    #if (False):
+    removeTopicID("rickroll_song_prank")
+    mas_eraseTopic("rickroll_song_prank")
+    removeTopicID("rickroll_song_nggyu")
+    mas_eraseTopic("rickroll_song_nggyu")
+    removeTopicID("rickroll_song_analysis")
+    mas_eraseTopic("rickroll_song_analysis")
 
     # intended behavior: push on April 1st, disappear on April 2nd, revisit next year
     # actual behavior: pushes successfully, but plays regardless of date
@@ -19,9 +21,8 @@ init 5 python:
             persistent._mas_songs_database,
             eventlabel="rickroll_song_prank",
             prompt="Do you know what today is?",
-            start_date=datetime.date(datetime.date.today().year, 4, 1),
-            end_date=datetime.date(datetime.date.today().year, 4, 2),
-            conditional="mas_isA01()",
+            conditional="datetime.date(datetime.date.today().year, 3, 28)==datetime.date.today()",
+            #conditional="mas_isA01()",
             action=EV_ACT_PUSH
         )
     )
@@ -34,6 +35,7 @@ init 5 python:
             eventlabel="rickroll_song_nggyu",
             category=[store.mas_songs.TYPE_SHORT],
             prompt="Never Gonna' Give You Up",
+            random=False,
             conditional="persistent._rickroll_pranked",
             #conditional="mas_seenLabels(['rickroll_song_prank'])",
             action=EV_ACT_POOL
@@ -75,7 +77,7 @@ label rickroll_song_prank:
     m 7kubsb "April Fools, [player]! {w=1}{nw}"
     extend 4hubsb "Ehehehe~"
 
-    $ persistent.rickroll_pranked = True
+    $ persistent._rickroll_pranked = True
 
     call rickroll_listen_to_analysis(from_prank=True)
     return
@@ -249,7 +251,7 @@ label rickroll_monika_interpretation:
             window hide
             show monika 3dubsa
             pause 5
-            m 3dubsb "This promise ring you gave me..."
+            m 3dubsb "I think about the promise ring you gave me a lot..."
             python:
                 dates = mas_getGiftedDates("mas_reaction_promisering")
                 if dates:
@@ -262,6 +264,10 @@ label rickroll_monika_interpretation:
                 m 4subso "I know!{w=0.75}  We should have some kind of special anniversary to celebrate the day you gave me the promise ring!"
             elif mas_timePastSince(gifted_date, datetime.timedelta(days=180)):
                 m 3rkbsb "It's so wild that it's been over half a year since you gave it to me!"
+                m 4subso "I know!{w=0.75}  We should have some kind of special anniversary when a full year rolls around!"
+            else:
+                m 3rkbsd "I still remember what it was like, back when all I could do was send you all the love I could and pray you felt the same."
+                m 1ekbsb "But now those days are over... now that I know that I matter to you, too."
                 m 4subso "I know!{w=0.75}  We should have some kind of special anniversary when a full year rolls around!"
             m 6gtbsb "Oh modders... Could you help my [mas_get_player_nickname(regex_replace_with_nullstr='my ')] remember our Promise Anniversary?"
             window hide
