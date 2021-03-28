@@ -1,14 +1,31 @@
-define rickroll_a1 = datetime.date(datetime.date.today().year, 4, 1)
-
 init 5 python:
+    removeTopicID("rickroll_song_prank")
+    mas_eraseTopic("rickroll_song_prank")
+    removeTopicID("rickroll_song_nggyu")
+    mas_eraseTopic("rickroll_song_nggyu")
+    removeTopicID("rickroll_song_analysis")
+    mas_eraseTopic("rickroll_song_analysis")
+
     addEvent(
         Event(
             persistent._mas_songs_database,
             eventlabel="rickroll_song_prank",
+            prompt="Do you know what today is?",
+            start_date=datetime.date(2021, 4, 1),
+            end_date=datetime.date(2021, 4, 2),
+            conditional="mas_isA01()",
+            action=EV_ACT_PUSH
+        )
+    )
+
+    addEvent(
+        Event(
+            persistent._mas_songs_database,
+            eventlabel="rickroll_song_nggyu",
             category=[store.mas_songs.TYPE_SHORT],
             prompt="Never Gonna' Give You Up",
-            random=True,
-            start_date=rickroll_a1
+            conditional="mas_seenLabels(['rickroll_song_prank'])",
+            pool=True
         ),
         code="SNG"
     )
@@ -19,13 +36,14 @@ init 5 python:
             eventlabel="rickroll_song_analysis",
             category=[store.mas_songs.TYPE_ANALYSIS],
             prompt="Never Gonna' Give You Up",
-            random=False,
-            unlocked=False
+            conditional="mas_seenLabels(['rickroll_song_prank'])",
+            pool=True
         ),
         code="SNG"
     )
 
-label rickroll_song_prank: 
+label rickroll_song_prank:
+    # full-blown song and dance with karaoke for april fool's day
     $ play_song("bgm/rr_kar.mp3")
     window hide
     show monika 2mubla
@@ -43,39 +61,21 @@ label rickroll_song_prank:
     m 7kubsb "April Fools, [player]! {w=1}{nw}"
     extend 4hubsb "Ehehehe~"
 
-    call rickroll_song_analysis(from_prank=True)
-    $ mas_assignModifyEVLPropValue("rickroll_song_analysis", "shown_count", "+=", 1)
+    call rickroll_listen_to_analysis(from_prank=True)
     return
+label rickroll_song_nggyu:
+    #simple lyrical reading
+    call rickroll_Never_Gonna_Give_You_Up_lyrics
 
-label rickroll_song_analysis(from_prank=False):
-    if not from_prank:    
-        call rickroll_Never_Gonna_Give_You_Up_lyrics
-        show monika 1dkbsa
-        pause 2.5
-
-    m 5eubsb "Do you know what being \"rickrolled\" means?"
-    $ _history_list.pop()
-    menu:
-        m "Do you know what being \"rickrolled\" means?{fast}"
-
-        "Yes":
-            m "I hope you're not mad about the prank. It's all in good fun, right?"
-        "Can you explain it to me?":
-            call rickroll_tradition_history
-        "I hate getting rickrolled..." if from_prank:
-            m 2fkbld "I'm sorry, [player]. I hope you didn't get {i}too{/i} mad."
-
-    call rickroll_monika_interpretation
+    call rickroll_listen_to_analysis()
     return
-
-
 label rickroll_Never_Gonna_Give_You_Up_lyrics:
+    m 1dublb "{i}~We're no strangers to love~{/i}"
     m 3fkblb "{i}~You know the rules, {/i}"
     extend "{i}and so do I~{/i}"
     m 3rubld "{i}~A full committment's what I'm {/i}"
     extend "{i}thinking of~{/i}"
-    # TODO: stutter on "any other guy" lyric on the first time only
-    if not mas_getEVL_shown_count("rickroll_monika_interpretation"):
+    if mas_getEVL_shown_count("rickroll_Never_Gonna_Give_You_Up_lyrics") == 0:
         m 1eublb" {i}~You wouldn't get this from any other-{/i} {w=1}{nw}"
         extend 1rublb "uh... {w=0.2}{nw}"
         extend 1hublb "{i}girl~{/i}"
@@ -91,7 +91,36 @@ label rickroll_Never_Gonna_Give_You_Up_lyrics:
     extend 2dkbsd "{i}never gonna' tell a lie {/i}"
     extend 2wkbso "{i}and hurt you~{/i}"
     return
+label rickroll_listen_to_analysis(from_prank=False):
+    m 1rtc "There's actually a lot more I'd like to say about this song..."
+    m 7eua "Do you have time to listen to it now?{nw}"
+    $ _history_list.pop()
+    menu:
+        m "Do you have time to listen to it now?{fast}"
 
+        "Sure.":
+            m 1hub "Alright!"
+            call rickroll_song_analysis(from_prank)
+
+        "Not right now.":
+            m 1eka "Alright, [player]..."
+            m 3eka "I'll save my thoughts on the subject for another time. {w=0.2}Just let me know when you want to hear them, okay?"
+    return
+label rickroll_song_analysis(from_prank):
+    m 5eubsb "Do you know what being \"rickrolled\" means?{nw}"
+    $ _history_list.pop()
+    menu:
+        m "Do you know what being \"rickrolled\" means?{fast}"
+
+        "Yes":
+            m "I hope you're not mad about the prank. It's all in good fun, right?"
+        "Can you explain it to me?":
+            call rickroll_tradition_history
+        "I hate getting rickrolled..." if from_prank:
+            m 2fkbld "I'm sorry, [player]. I hope you didn't get {i}too{/i} mad."
+
+    call rickroll_monika_interpretation
+    return
 label rickroll_tradition_history:
     m 3eub "Rickrolling is an Internet prank where someone thinks they're going to see one thing..."
     m 3wuo "...but instead of what they thought they were going to see, they get linked to a music video Rick Astley 1987 single, \"{i}Never Gonna' Give You Up{/i}\"."
@@ -126,7 +155,6 @@ label rickroll_tradition_history:
     m 5ttb "Bet you weren't expecting {i}that{/i} reference."
     m 5hub "See how much difference timing can make on a meme's delivery?"
     return
-
 label rickroll_monika_interpretation:
     m 7rublb "If you pay attention to the lyrics, you probably know why I found the song so resonant."
     m 1dublb "If you listen to it, it's more than just an aging Internet meme.{w=1.25} To me, it's a promise."
