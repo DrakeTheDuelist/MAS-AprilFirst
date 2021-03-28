@@ -1,43 +1,57 @@
-init 5 python:
-    removeTopicID("rickroll_song_prank")
-    mas_eraseTopic("rickroll_song_prank")
-    removeTopicID("rickroll_song_nggyu")
-    mas_eraseTopic("rickroll_song_nggyu")
-    removeTopicID("rickroll_song_analysis")
-    mas_eraseTopic("rickroll_song_analysis")
+default persistent._rickroll_pranked = False
 
+init 5 python:
+    persistent.rickroll_pranked = False
+    # delete events (tests a first run)
+    if (False):
+        removeTopicID("rickroll_song_prank")
+        mas_eraseTopic("rickroll_song_prank")
+        removeTopicID("rickroll_song_nggyu")
+        mas_eraseTopic("rickroll_song_nggyu")
+        removeTopicID("rickroll_song_analysis")
+        mas_eraseTopic("rickroll_song_analysis")
+
+    # intended behavior: push on April 1st, disappear on April 2nd, revisit next year
+    # actual behavior: pushes successfully, but plays regardless of date
+    # it also shows up in Unseen; I do NOT want this to happen except on April 1st, though I will settle for it never happening at all
     addEvent(
         Event(
             persistent._mas_songs_database,
             eventlabel="rickroll_song_prank",
             prompt="Do you know what today is?",
-            start_date=datetime.date(2021, 4, 1),
-            end_date=datetime.date(2021, 4, 2),
+            start_date=datetime.date(datetime.date.today().year, 4, 1),
+            end_date=datetime.date(datetime.date.today().year, 4, 2),
             conditional="mas_isA01()",
             action=EV_ACT_PUSH
         )
     )
 
+    # intended behavior: show up only after prank, can revisit via pool (with short songs) without restriction
+    # actual behavior: shows up in the menu too early
     addEvent(
         Event(
             persistent._mas_songs_database,
             eventlabel="rickroll_song_nggyu",
             category=[store.mas_songs.TYPE_SHORT],
             prompt="Never Gonna' Give You Up",
-            conditional="mas_seenLabels(['rickroll_song_prank'])",
-            pool=True
+            conditional="persistent._rickroll_pranked",
+            #conditional="mas_seenLabels(['rickroll_song_prank'])",
+            action=EV_ACT_POOL
         ),
         code="SNG"
     )
 
+    # intended behavior: show up only after first prank, can revisit via pool (song analysis) without restriction
+    # actual behavior: never shows up at all, before or after prank
     addEvent(
         Event(
             persistent._mas_songs_database,
             eventlabel="rickroll_song_analysis",
             category=[store.mas_songs.TYPE_ANALYSIS],
             prompt="Never Gonna' Give You Up",
-            conditional="mas_seenLabels(['rickroll_song_prank'])",
-            pool=True
+            conditional="persistent._rickroll_pranked",
+            #conditional="mas_seenLabels(['rickroll_song_prank'])",
+            action=EV_ACT_POOL
         ),
         code="SNG"
     )
@@ -61,6 +75,8 @@ label rickroll_song_prank:
     m 7kubsb "April Fools, [player]! {w=1}{nw}"
     extend 4hubsb "Ehehehe~"
 
+    $ persistent.rickroll_pranked = True
+
     call rickroll_listen_to_analysis(from_prank=True)
     return
 label rickroll_song_nggyu:
@@ -75,6 +91,8 @@ label rickroll_Never_Gonna_Give_You_Up_lyrics:
     extend "{i}and so do I~{/i}"
     m 3rubld "{i}~A full committment's what I'm {/i}"
     extend "{i}thinking of~{/i}"
+    # intended behavior: only stutter on the first play;
+    # on all subsequent performances, default to original lyrics
     if mas_getEVL_shown_count("rickroll_Never_Gonna_Give_You_Up_lyrics") == 0:
         m 1eublb" {i}~You wouldn't get this from any other-{/i} {w=1}{nw}"
         extend 1rublb "uh... {w=0.2}{nw}"
