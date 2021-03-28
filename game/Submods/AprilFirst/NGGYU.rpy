@@ -1,93 +1,111 @@
-default persistent._rickroll_pranked = False
-
-init 4 python:    
-    persistent._rickroll_pranked = False
-
 init 5 python:
     # delete events (tests a first run)
     #if (False):
-    removeTopicID("rickroll_song_prank")
-    mas_eraseTopic("rickroll_song_prank")
+    removeTopicID("rickroll_prank")
+    mas_eraseTopic("rickroll_prank")
     removeTopicID("rickroll_song_nggyu")
     mas_eraseTopic("rickroll_song_nggyu")
-    removeTopicID("rickroll_song_analysis")
-    mas_eraseTopic("rickroll_song_analysis")
+    removeTopicID("rickroll_nggyu_lyrics")
+    mas_eraseTopic("rickroll_nggyu_lyrics")
+    removeTopicID("rickroll_song_nggyu_analysis")
+    mas_eraseTopic("rickroll_song_nggyu_analysis")
 
-    # intended behavior: push on April 1st, disappear on April 2nd, revisit next year
-    # actual behavior: pushes successfully, but plays regardless of date
-    # it also shows up in Unseen; I do NOT want this to happen except on April 1st, though I will settle for it never happening at all
     addEvent(
         Event(
-            persistent._mas_songs_database,
-            eventlabel="rickroll_song_prank",
-            prompt="Do you know what today is?",
-            conditional="datetime.date(datetime.date.today().year, 3, 28)==datetime.date.today()",
-            #conditional="mas_isA01()",
-            action=EV_ACT_PUSH
+            persistent.event_database,
+            eventlabel="rickroll_prank",
+            category=['trivia'],
+            prompt="April 1st",
+            action=EV_ACT_RANDOM,
+            start_date=datetime.date(datetime.date.today().year, 3, 28),
+            end_date=datetime.date(datetime.date.today().year, 4, 2)
         )
     )
 
-    # intended behavior: show up only after prank, can revisit via pool (with short songs) without restriction
-    # actual behavior: shows up in the menu too early
+    # NOTE: TYPE_LONG stops this method from being pulled any other way than a label that I write (and thus can control conditions)
     addEvent(
         Event(
             persistent._mas_songs_database,
             eventlabel="rickroll_song_nggyu",
-            category=[store.mas_songs.TYPE_SHORT],
-            prompt="Never Gonna' Give You Up",
-            random=False,
-            conditional="persistent._rickroll_pranked",
-            #conditional="mas_seenLabels(['rickroll_song_prank'])",
-            action=EV_ACT_POOL
+            category=[store.mas_songs.TYPE_LONG],
+            prompt="Never Gonna' Give You Up"
         ),
         code="SNG"
     )
 
-    # intended behavior: show up only after first prank, can revisit via pool (song analysis) without restriction
-    # actual behavior: never shows up at all, before or after prank
     addEvent(
         Event(
             persistent._mas_songs_database,
-            eventlabel="rickroll_song_analysis",
+            eventlabel="rickroll_song_nggyu_analysis",
             category=[store.mas_songs.TYPE_ANALYSIS],
-            prompt="Never Gonna' Give You Up",
-            conditional="persistent._rickroll_pranked",
-            #conditional="mas_seenLabels(['rickroll_song_prank'])",
-            action=EV_ACT_POOL
+            prompt="Never Gonna' Give You Up"
         ),
         code="SNG"
     )
 
-label rickroll_song_prank:
-    # full-blown song and dance with karaoke for april fool's day
-    $ play_song("bgm/rr_kar.mp3")
-    window hide
-    show monika 2mubla
-    pause 2.5
-    show monika 2gubla
-    pause 2.5
-    show monika 6ttbsa
-    pause 4.0
-    show monika 1hubsb
-    pause 9.0
-    call rickroll_Never_Gonna_Give_You_Up_lyrics
-    show monika 1dkbsa
-    $ play_song(None, fadeout=2.5)
-    pause 2.5
-    m 7kubsb "April Fools, [player]! {w=1}{nw}"
-    extend 4hubsb "Ehehehe~"
-
-    $ persistent._rickroll_pranked = True
-
-    call rickroll_listen_to_analysis(from_prank=True)
+label rickroll_prank:
+    call rickroll_song_nggyu(do_prank=True)
     return
-label rickroll_song_nggyu:
-    #simple lyrical reading
-    call rickroll_Never_Gonna_Give_You_Up_lyrics
 
-    call rickroll_listen_to_analysis()
+label rickroll_song_nggyu(do_prank=False):
+    if do_prank:
+        # full-blown song and dance with karaoke for april fool's day
+        $ play_song("bgm/rr_kar.mp3")
+        window hide
+        show monika 2mubla
+        pause 2.5
+        show monika 2gubla
+        pause 2.5
+        show monika 6ttbsa
+        pause 4.0
+        show monika 1hubsb
+        pause 9.0
+        call rickroll_nggyu_lyrics
+        show monika 1dkbsa
+        $ play_song(None, fadeout=2.5)
+        pause 2.5
+        m 7kubsb "April Fools, [player]! {w=1}{nw}"
+        extend 4hubsb "Ehehehe~"
+    else:
+        #simple lyrical reading
+        call rickroll_nggyu_lyrics
+
+    #hints at the analysis on first viewing
+    if not seen_event("rickroll_song_nggyu"):
+        m 1rtc "There's actually a lot more I'd like to say about this song..."
+        m 7eua "Do you have time to listen to it now?{nw}"
+        $ _history_list.pop()
+        menu:
+            m "Do you have time to listen to it now?{fast}"
+
+            "Sure.":
+                m 1hub "Alright!"
+                call rickroll_song_nggyu_analysis(from_prank=True)
+
+            "Not right now.":
+                m 1eka "Alright, [player]..."
+                m 3eka "I'll save my thoughts on the subject for another time. {w=0.2}Just let me know when you want to hear them, okay?"
+    
     return
-label rickroll_Never_Gonna_Give_You_Up_lyrics:
+label rickroll_song_nggyu_analysis(from_prank=False):
+    if not from_prank:
+        call rickroll_nggyu_lyrics
+
+    m 5eubsb "Do you know what being \"rickrolled\" means?{nw}"
+    $ _history_list.pop()
+    menu:
+        m "Do you know what being \"rickrolled\" means?{fast}"
+
+        "Yes":
+            m "I hope you're not mad about the prank. It's all in good fun, right?"
+        "Can you explain it to me?":
+            call rickroll_tradition_history
+        "I hate getting rickrolled..." if from_prank:
+            m 2fkbld "I'm sorry, [player]. I hope you didn't get {i}too{/i} mad."
+
+    call rickroll_monika_interpretation
+    return
+label rickroll_nggyu_lyrics:
     m 1dublb "{i}~We're no strangers to love~{/i}"
     m 3fkblb "{i}~You know the rules, {/i}"
     extend "{i}and so do I~{/i}"
@@ -95,7 +113,7 @@ label rickroll_Never_Gonna_Give_You_Up_lyrics:
     extend "{i}thinking of~{/i}"
     # intended behavior: only stutter on the first play;
     # on all subsequent performances, default to original lyrics
-    if mas_getEVL_shown_count("rickroll_Never_Gonna_Give_You_Up_lyrics") == 0:
+    if not seen_event("rickroll_nggyu_lyrics"):
         m 1eublb" {i}~You wouldn't get this from any other-{/i} {w=1}{nw}"
         extend 1rublb "uh... {w=0.2}{nw}"
         extend 1hublb "{i}girl~{/i}"
@@ -110,36 +128,6 @@ label rickroll_Never_Gonna_Give_You_Up_lyrics:
     extend 2dkbso "{i}never gonna' say goodbye, {/i}"
     extend 2dkbsd "{i}never gonna' tell a lie {/i}"
     extend 2wkbso "{i}and hurt you~{/i}"
-    return
-label rickroll_listen_to_analysis(from_prank=False):
-    m 1rtc "There's actually a lot more I'd like to say about this song..."
-    m 7eua "Do you have time to listen to it now?{nw}"
-    $ _history_list.pop()
-    menu:
-        m "Do you have time to listen to it now?{fast}"
-
-        "Sure.":
-            m 1hub "Alright!"
-            call rickroll_song_analysis(from_prank)
-
-        "Not right now.":
-            m 1eka "Alright, [player]..."
-            m 3eka "I'll save my thoughts on the subject for another time. {w=0.2}Just let me know when you want to hear them, okay?"
-    return
-label rickroll_song_analysis(from_prank):
-    m 5eubsb "Do you know what being \"rickrolled\" means?{nw}"
-    $ _history_list.pop()
-    menu:
-        m "Do you know what being \"rickrolled\" means?{fast}"
-
-        "Yes":
-            m "I hope you're not mad about the prank. It's all in good fun, right?"
-        "Can you explain it to me?":
-            call rickroll_tradition_history
-        "I hate getting rickrolled..." if from_prank:
-            m 2fkbld "I'm sorry, [player]. I hope you didn't get {i}too{/i} mad."
-
-    call rickroll_monika_interpretation
     return
 label rickroll_tradition_history:
     m 3eub "Rickrolling is an Internet prank where someone thinks they're going to see one thing..."
