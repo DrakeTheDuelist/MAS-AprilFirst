@@ -1,14 +1,13 @@
 init 5 python:
-    # delete events (tests a first run)
-    #if (False):
-    removeTopicID("rickroll_prank")
-    mas_eraseTopic("rickroll_prank")
-    removeTopicID("rickroll_song_nggyu")
-    mas_eraseTopic("rickroll_song_nggyu")
-    removeTopicID("rickroll_nggyu_lyrics")
-    mas_eraseTopic("rickroll_nggyu_lyrics")
-    removeTopicID("rickroll_song_nggyu_analysis")
-    mas_eraseTopic("rickroll_song_nggyu_analysis")
+    # first run testing only
+    #removeTopicID("rickroll_prank")
+    #mas_eraseTopic("rickroll_prank")
+    #removeTopicID("rickroll_song_nggyu")
+    #mas_eraseTopic("rickroll_song_nggyu")
+    #removeTopicID("rickroll_nggyu_lyrics")
+    #mas_eraseTopic("rickroll_nggyu_lyrics")
+    #removeTopicID("rickroll_song_nggyu_analysis")
+    #mas_eraseTopic("rickroll_song_nggyu_analysis")
 
     addEvent(
         Event(
@@ -16,8 +15,8 @@ init 5 python:
             eventlabel="rickroll_prank",
             category=['trivia'],
             prompt="April 1st",
-            action=EV_ACT_RANDOM,
-            start_date=datetime.date(datetime.date.today().year, 3, 28),
+            action=EV_ACT_PUSH,
+            start_date=datetime.date(datetime.date.today().year, 4, 1),
             end_date=datetime.date(datetime.date.today().year, 4, 2)
         )
     )
@@ -44,7 +43,11 @@ init 5 python:
     )
 
 label rickroll_prank:
-    call rickroll_song_nggyu(do_prank=True)
+    # first run testing only
+    # $ mas_getEV("rickroll_song_nggyu").shown_count = 0
+
+    call rickroll_song_nggyu(do_prank=mas_isA01())    
+    $ mas_getEV("rickroll_song_nggyu").shown_count += 1
     return
 
 label rickroll_song_nggyu(do_prank=False):
@@ -71,7 +74,7 @@ label rickroll_song_nggyu(do_prank=False):
         call rickroll_nggyu_lyrics
 
     #hints at the analysis on first viewing
-    if not seen_event("rickroll_song_nggyu"):
+    if not mas_getEVLPropValue("rickroll_song_nggyu", "shown_count", 0):
         m 1rtc "There's actually a lot more I'd like to say about this song..."
         m 7eua "Do you have time to listen to it now?{nw}"
         $ _history_list.pop()
@@ -81,6 +84,7 @@ label rickroll_song_nggyu(do_prank=False):
             "Sure.":
                 m 1hub "Alright!"
                 call rickroll_song_nggyu_analysis(from_prank=True)
+                $ mas_getEV("rickroll_song_nggyu_analysis").shown_count += 1
 
             "Not right now.":
                 m 1eka "Alright, [player]..."
@@ -97,7 +101,7 @@ label rickroll_song_nggyu_analysis(from_prank=False):
         m "Do you know what being \"rickrolled\" means?{fast}"
 
         "Yes":
-            m "I hope you're not mad about the prank. It's all in good fun, right?"
+            m 5kubsb "I hope you're not mad about the prank. It's all in good fun, right?"
         "Can you explain it to me?":
             call rickroll_tradition_history
         "I hate getting rickrolled..." if from_prank:
@@ -113,7 +117,7 @@ label rickroll_nggyu_lyrics:
     extend "{i}thinking of~{/i}"
     # intended behavior: only stutter on the first play;
     # on all subsequent performances, default to original lyrics
-    if not seen_event("rickroll_nggyu_lyrics"):
+    if not mas_getEVLPropValue("rickroll_song_nggyu", "shown_count", 0):
         m 1eublb" {i}~You wouldn't get this from any other-{/i} {w=1}{nw}"
         extend 1rublb "uh... {w=0.2}{nw}"
         extend 1hublb "{i}girl~{/i}"
@@ -131,10 +135,10 @@ label rickroll_nggyu_lyrics:
     return
 label rickroll_tradition_history:
     m 3eub "Rickrolling is an Internet prank where someone thinks they're going to see one thing..."
-    m 3wuo "...but instead of what they thought they were going to see, they get linked to a music video Rick Astley 1987 single, \"{i}Never Gonna' Give You Up{/i}\"."
+    m 3wuo "...but instead of what they thought they were going to see, they get linked to a music video of Rick Astley's 1987 single, \"{i}Never Gonna' Give You Up{/i}\"."
     m 1rud "From what I've been reading, it's a tradition online, especially around April Fool's Day."
     m 4duo "It all started out on 4chan in 2006."
-    if mas_getEVL_shown_count("monika_4chan"):
+    if mas_getEVL_shown_count("monika_4chan") > 0:
         m 5rublb "It's kinda' funny how {i}Monika After Story{/i} and rickrolling can both trace their roots to the same site."
         m 5hublb "It's like a memetic uncle for me, if you think about it. Ahahaha~"
     m 3rub "Back then, there was a phenomenon called \"duckrolling\"."
