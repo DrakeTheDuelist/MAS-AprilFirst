@@ -290,9 +290,9 @@ label rickroll_monika_interpretation:
         # because Monika shouldn't say "Wouldn't you agree, [name]? I love you, [name]" because it sounds awkward
         $ nickname = mas_get_player_nickname
         if nickname != player:
-            nickname = ", " + nickname
+            $ nickname = ", " + nickname
         else:
-            nickname = ""
+            $ nickname = ""
         extend 5ekbsb " Wouldn't you agree[nickname]?"
         if mas_isA01():
             m 5dkbsb "Even knowing what today is, I promise I mean these words from the bottom of my heart: "
