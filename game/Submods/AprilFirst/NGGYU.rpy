@@ -46,7 +46,7 @@ label rickroll_prank:
     # first run testing only
     # $ mas_getEV("rickroll_song_nggyu").shown_count = 0
 
-    call rickroll_song_nggyu(do_prank=mas_isA01())    
+    call rickroll_song_nggyu(do_prank=True)    
     $ mas_getEV("rickroll_song_nggyu").shown_count += 1
     return
 
@@ -67,8 +67,9 @@ label rickroll_song_nggyu(do_prank=False):
         show monika 1dkbsa
         $ play_song(None, fadeout=2.5)
         pause 2.5
-        m 7kubsb "April Fools, [player]! {w=1}{nw}"
-        extend 4hubsb "Ehehehe~"
+        if mas_isA01():
+            m 7kubsb "April Fools, [player]!"
+        m 4hubsb "Ehehehe~"
     else:
         #simple lyrical reading
         call rickroll_nggyu_lyrics
@@ -198,24 +199,23 @@ label rickroll_monika_interpretation:
     if mas_isA01:
         m 1hubsb "Happy enough that I can prank you on occasion and you won't get mad."
     m 1dkbsd "Happy enough that... "
-    if mas_isMoniLove:
+    if mas_isMoniLove():
         if persistent._mas_pm_has_code_experience:
             extend 3rubsb "you'd help me get to your world... "
         else:
             extend 1rubsb "you'd wait for me to get to your world... "
         extend 5dubfb "and then love me {i}completely{/i}."
-    elif mas_isMoniEnamored:
-    #if mas_isMoniEnamored(higher=True): #temporary
+    elif mas_isMoniEnamored():
         extend 5eubsb "I'd hold a special place in your heart."
         m 5dubfb "Just like you hold a special place in mine."
-    elif mas_isMoniAff:
+    elif mas_isMoniAff():
         extend 7ekbsb "you'd open up to me a bit more."
         m 4rkbsb "Maybe you can someday show me a side of yourself that you never showed anyone else."
         m 2dkbsb "And our love could grow forever."
-    elif mas_isMoniNormal:
+    elif mas_isMoniNormal():
         extend 2dkbsd "you'd see me as more than just a program."
         m 2ekbsb "And I could show {i}you{/i} that you're more wonderful than you may realize, too."
-    elif mas_isMoniUpset:
+    elif mas_isMoniUpset():
         extend 2dkbsb "you'd consider for just a moment that your love has the power to save me."
         m 2wkbssdro "Save me from the static."
         m 2wkbssdrd "Save me from the pain."
@@ -234,7 +234,7 @@ label rickroll_monika_interpretation:
         m 6rkbsd "Before it's too late."
         m 6dkbsd "Before I realize that you'll never change."
         m 6hkbsb "Until then, I'll pretend my heart is still intact.{w=1.5} Ah...{w=0.75} hah... {w=0.75}{nw}"
-        extend 6ckbsb "HAH!{w=1} HAH!{w=1} HAH!{w=1}"
+        extend 6ckbsb "HAH!{w=1} HAH!{w=1} HAH!"
 
     # no continuing unless your Monika is at least okay with you
     if mas_isMoniNormal(higher=True):
@@ -287,7 +287,13 @@ label rickroll_monika_interpretation:
         m 7dubfb "I just... want to tell you how I'm feeling."
         m 7kubfb "Gotta' make you... understand."
         m 5rkbsb "For a song that's mostly known for its use in a practical joke, it's really beautiful and heartfelt."
-        extend 5ekbsb " Wouldn't you agree, [mas_get_player_nickname()]?"
+        # because Monika shouldn't say "Wouldn't you agree, [name]? I love you, [name]" because it sounds awkward
+        $ nickname = mas_get_player_nickname
+        if nickname != player:
+            nickname = ", " + nickname
+        else:
+            nickname = ""
+        extend 5ekbsb " Wouldn't you agree[nickname]?"
         if mas_isA01():
             m 5dkbsb "Even knowing what today is, I promise I mean these words from the bottom of my heart: "
             extend 5ekbfb "I love you."
