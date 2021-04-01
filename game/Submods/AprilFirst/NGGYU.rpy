@@ -288,7 +288,7 @@ label rickroll_monika_interpretation:
         m 7kubfb "Gotta' make you... understand."
         m 5rkbsb "For a song that's mostly known for its use in a practical joke, it's really beautiful and heartfelt."
         # because Monika shouldn't say "Wouldn't you agree, [name]? I love you, [name]" because it sounds awkward
-        $ nickname = mas_get_player_nickname
+        $ nickname = mas_get_player_nickname()
         if nickname != player:
             $ nickname = ", " + nickname
         else:
