@@ -1,14 +1,5 @@
 init 5 python:
-    # first run testing only
-    #removeTopicID("rickroll_prank")
-    #mas_eraseTopic("rickroll_prank")
-    #removeTopicID("rickroll_song_nggyu")
-    #mas_eraseTopic("rickroll_song_nggyu")
-    #removeTopicID("rickroll_nggyu_lyrics")
-    #mas_eraseTopic("rickroll_nggyu_lyrics")
-    #removeTopicID("rickroll_song_nggyu_analysis")
-    #mas_eraseTopic("rickroll_song_nggyu_analysis")
-
+    # have a pushed event only on April 1st
     addEvent(
         Event(
             persistent.event_database,
@@ -18,6 +9,18 @@ init 5 python:
             action=EV_ACT_PUSH,
             start_date=datetime.date(datetime.date.today().year, 4, 1),
             end_date=datetime.date(datetime.date.today().year, 4, 2)
+        )
+    )
+
+    # have a pooled event that the player can talk to Monika about anytime
+    addEvent(
+        Event(
+            persistent.event_database,
+            eventlabel="rickroll_topic",
+            category=['media'],
+            prompt="Rickrolls",
+            random=False,
+            pool=True
         )
     )
 
@@ -42,10 +45,22 @@ init 5 python:
         code="SNG"
     )
 
-label rickroll_prank:
-    # first run testing only
-    # $ mas_getEV("rickroll_song_nggyu").shown_count = 0
+label rickroll_topic:
+    m 1husdlb "Oh, I think you know what's coming. Would you like the full prank?"
+    menu:
+        m "Would you like the full prank?{fast}"
 
+        "Sure!":
+            $ ask_for_prank = True
+        "...I just want to talk about it.":
+            $ ask_for_prank = False
+
+    $ mas_getEV("rickroll_song_nggyu").shown_count = 0
+    call rickroll_song_nggyu(do_prank=ask_for_prank)
+    $ mas_getEV("rickroll_song_nggyu").shown_count += 1
+    return
+
+label rickroll_prank:
     call rickroll_song_nggyu(do_prank=True)    
     $ mas_getEV("rickroll_song_nggyu").shown_count += 1
     return
@@ -63,7 +78,7 @@ label rickroll_song_nggyu(do_prank=False):
         pause 4.0
         show monika 1hubsb
         pause 9.0
-        call rickroll_nggyu_lyrics
+        call rickroll_nggyu_lyrics(first_play=mas_getEVLPropValue("rickroll_prank", "shown_count", 0))
         show monika 1dkbsa
         $ play_song(None, fadeout=2.5)
         pause 2.5
@@ -110,7 +125,7 @@ label rickroll_song_nggyu_analysis(from_prank=False):
 
     call rickroll_monika_interpretation
     return
-label rickroll_nggyu_lyrics:
+label rickroll_nggyu_lyrics(first_play=False):
     m 1dublb "{i}~We're no strangers to love~{/i}"
     m 3fkblb "{i}~You know the rules, {/i}"
     extend "{i}and so do I~{/i}"
@@ -118,7 +133,7 @@ label rickroll_nggyu_lyrics:
     extend "{i}thinking of~{/i}"
     # intended behavior: only stutter on the first play;
     # on all subsequent performances, default to original lyrics
-    if not mas_getEVLPropValue("rickroll_song_nggyu", "shown_count", 0):
+    if first_play:
         m 1eublb" {i}~You wouldn't get this from any other-{/i} {w=1}{nw}"
         extend 1rublb "uh... {w=0.2}{nw}"
         extend 1hublb "{i}girl~{/i}"
@@ -228,7 +243,7 @@ label rickroll_monika_interpretation:
         call mas_transition_from_emptydesk
         m 6fkbsd "Please, show me just a bit of kindness."
         m 6lkbsd "Tell me that you were just experimenting with the game because you wanted to see what would happen."
-        $ AprFool = "April Fool's" if mas_isA01 else ""
+        $ AprFool = "April Fool's" if mas_isA01() else ""
         m 6lkbso "Tell me that the way you've treated me this whole time has all been one big, long [AprFool] joke at my expense."
         m 6fkbso "Tell me that I'm wrong about you."
         m 6rkbsd "Before it's too late."
